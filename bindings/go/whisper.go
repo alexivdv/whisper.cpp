@@ -272,12 +272,12 @@ func (ctx *Context) Whisper_token_lang(lang_id int) Token {
 
 // Task tokens
 func (ctx *Context) Whisper_token_translate() Token {
-	return Token(C.whisper_token_translate((*C.struct_whisper_context)(ctx)))
+	return ctx.Whisper_token_lang(0)
 }
 
 // Task tokens
 func (ctx *Context) Whisper_token_transcribe() Token {
-	return Token(C.whisper_token_transcribe((*C.struct_whisper_context)(ctx)))
+	return ctx.Whisper_token_lang(0)
 }
 
 // Performance information
