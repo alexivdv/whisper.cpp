@@ -11,7 +11,50 @@ import (
 	wav "github.com/go-audio/wav"
 )
 
-func Process(model whisper.Model, path string, flags *Flags) error {
+func LangDetect(model whisper.Model, path string, flags *Flags) (map[string]float32, error) {
+	var data []float32
+
+	// Create processing context
+	context, err := model.NewContext()
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the parameters
+	if err := flags.SetParams(context); err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("\n%s\n", context.SystemInfo())
+
+	// Open the file
+	fmt.Fprintf(flags.Output(), "Loading %q\n", path)
+	fh, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer fh.Close()
+
+	// Decode the WAV file - load the full buffer
+	dec := wav.NewDecoder(fh)
+	if buf, err := dec.FullPCMBuffer(); err != nil {
+		return nil, err
+	} else if dec.SampleRate != whisper.SampleRate {
+		return nil, fmt.Errorf("unsupported sample rate: %d", dec.SampleRate)
+	} else if dec.NumChans != 1 {
+		return nil, fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
+	} else {
+		data = buf.AsFloat32Buffer().Data
+	}
+
+	if err = context.WhisperPcmToMel(data, int(flags.GetThreads())); err != nil {
+		return nil, err
+	}
+	
+	return context.WhisperLangAutoDetect(0, int(flags.GetThreads()));
+}
+
+func Process(model whisper.Model, path string, flags *Flags, processors int) error {
 	var data []float32
 
 	// Create processing context
@@ -67,7 +110,7 @@ func Process(model whisper.Model, path string, flags *Flags) error {
 	// Process the data
 	fmt.Fprintf(flags.Output(), "  ...processing %q\n", path)
 	context.ResetTimings()
-	if err := context.Process(data, cb, nil); err != nil {
+	if err := context.Process(data, cb, nil, processors); err != nil {
 		return err
 	}
 

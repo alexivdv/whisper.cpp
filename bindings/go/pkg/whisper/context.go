@@ -144,15 +144,25 @@ func (context *context) SystemInfo() string {
 	)
 }
 
+func (context *context) WhisperPcmToMel(data []float32, n_threads int) (error) {
+	return context.model.ctx.Whisper_pcm_to_mel(data, n_threads)
+}
+
 // Use mel data at offset_ms to try and auto-detect the spoken language
 // Make sure to call whisper_pcm_to_mel() or whisper_set_mel() first.
 // Returns the probabilities of all languages.
-func (context *context) WhisperLangAutoDetect(offset_ms int, n_threads int) ([]float32, error) {
+func (context *context) WhisperLangAutoDetect(offset_ms int, n_threads int) (map[string]float32, error) {
 	langProbs, err := context.model.ctx.Whisper_lang_auto_detect(offset_ms, n_threads)
 	if err != nil {
 		return nil, err
 	}
-	return langProbs, nil
+
+	dict := make(map[string]float32)
+	for i, p := range langProbs {
+			dict[whisper.Whisper_lang_str(i)] = p
+	}
+
+	return dict, nil
 }
 
 // Process new sample data and return any errors
@@ -160,6 +170,7 @@ func (context *context) Process(
 	data []float32,
 	callNewSegment SegmentCallback,
 	callProgress ProgressCallback,
+	processors int,
 ) error {
 	if context.model.ctx == nil {
 		return ErrInternalAppError
@@ -169,8 +180,6 @@ func (context *context) Process(
 		context.params.SetSingleSegment(true)
 	}
 
-	// We don't do parallel processing at the moment
-	processors := 0
 	if processors > 1 {
 		if err := context.model.ctx.Whisper_full_parallel(context.params, data, processors, nil, func(new int) {
 			if callNewSegment != nil {

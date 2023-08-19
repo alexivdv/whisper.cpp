@@ -35,9 +35,15 @@ func main() {
 
 	// Process files
 	for _, filename := range flags.Args() {
-		if err := Process(model, filename, flags); err != nil {
+
+		data, err := LangDetect(model, filename, flags)
+		for k, v := range data {
+			fmt.Printf("%s: %f\n", k, v)
+		}
+		fmt.Fprintln(os.Stdout, err)
+		/*if err := Process(model, filename, flags, flags.GetProcessors()); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
-		}
+		}*/
 	}
 }

@@ -64,6 +64,10 @@ func (flags *Flags) GetThreads() uint {
 	return flags.Lookup("threads").Value.(flag.Getter).Get().(uint)
 }
 
+func (flags *Flags) GetProcessors() int {
+	return flags.Lookup("processors").Value.(flag.Getter).Get().(int)
+}
+
 func (flags *Flags) GetOut() string {
 	return strings.ToLower(flags.Lookup("out").Value.String())
 }
@@ -146,6 +150,7 @@ func registerFlags(flag *Flags) {
 	flag.Duration("offset", 0, "Time offset")
 	flag.Duration("duration", 0, "Duration of audio to process")
 	flag.Uint("threads", 0, "Number of threads to use")
+	flag.Int("processors", 0, "Number of processors to use")
 	flag.Bool("speedup", false, "Enable speedup")
 	flag.Uint("max-len", 0, "Maximum segment length in characters")
 	flag.Uint("max-tokens", 0, "Maximum tokens per segment")

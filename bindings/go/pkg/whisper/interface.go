@@ -52,7 +52,9 @@ type Context interface {
 	// Process mono audio data and return any errors.
 	// If defined, newly generated segments are passed to the
 	// callback function during processing.
-	Process([]float32, SegmentCallback, ProgressCallback) error
+	Process([]float32, SegmentCallback, ProgressCallback, int) error
+	WhisperPcmToMel(data []float32, n_threads int) error
+	WhisperLangAutoDetect(offset_ms int, n_threads int) (map[string]float32, error)
 
 	// After process is called, return segments until the end of the stream
 	// is reached, when io.EOF is returned.

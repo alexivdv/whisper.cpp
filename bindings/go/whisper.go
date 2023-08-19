@@ -197,7 +197,8 @@ func Whisper_lang_str(id int) string {
 // ref: https://github.com/openai/whisper/blob/main/whisper/decoding.py#L18-L69
 func (ctx *Context) Whisper_lang_auto_detect(offset_ms, n_threads int) ([]float32, error) {
 	probs := make([]float32, Whisper_lang_max_id()+1)
-	if n := int(C.whisper_lang_auto_detect((*C.struct_whisper_context)(ctx), C.int(offset_ms), C.int(n_threads), (*C.float)(&probs[0]))); n < 0 {
+	n := int(C.whisper_lang_auto_detect((*C.struct_whisper_context)(ctx), C.int(offset_ms), C.int(n_threads), (*C.float)(&probs[0]))); 
+	if n < 0 {
 		return nil, ErrAutoDetectFailed
 	} else {
 		return probs, nil
